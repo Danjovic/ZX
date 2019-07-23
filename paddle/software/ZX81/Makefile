@@ -5,9 +5,9 @@
 PROJ = readPaddleDemo
 
 ASM = pasmo
-TAP_FILE = $(PROJ).tap
+P_FILE = $(PROJ).p
 MAIN_ASM = main.asm
-
+EXT_OBJ = main.obj
 ASM_FILES = $(MAIN_ASM) 
 
 all:	default
@@ -15,9 +15,9 @@ all:	default
 default:	main
 
 clean:
-	-rm -f $(TAP_FILE)
+	-rm -f $(P_FILE)
 
-main:	$(TAP_FILE)
+main:	$(P_FILE)
 
-$(TAP_FILE):	$(ASM_FILES) Makefile 
-	$(ASM) --tapbas $(MAIN_ASM) $(TAP_FILE)
+$(P_FILE):	$(ASM_FILES) Makefile 
+	$(ASM) $(MAIN_ASM) $(P_FILE)
