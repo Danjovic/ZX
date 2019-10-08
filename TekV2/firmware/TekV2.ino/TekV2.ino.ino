@@ -11,10 +11,9 @@
   | |___| | | | | | |_| | | (_| | || (_) | |      \ V /  / __/
   |_____|_| |_| |_|\__,_|_|\__,_|\__\___/|_|       \_/  |_____|
 
-                ZX Spectrum version
 
               Daniel José Viana, August 5 2019
-			  alfa release, October 2,2019
+
 
    Tek is a ZX Spectrum keyboard emulator based on an AVR microcontroller
 
@@ -26,6 +25,15 @@
    The circuit is heavilly based on Arduino Nano V3 but any Arduino or
    AVR chip with enough pins and flash should do it. 
    Note: It is necessary to use a flip-flop (74xx74) to hold the wait state.
+
+Versioning:
+-October 2, 2019 
+ Alfa release (functional)
+-October 7, 2019 
+ Added option to generate code to ZX81 and Speccy 
+
+
+
 
 */
 
@@ -73,60 +81,16 @@
 
 #define Keymap_Size 8  // 8 characters for ZX Spectrum
 
-// PC Extended Scan Codes
-#define _PS2_UP 0x75
-#define _PS2_DOWN 0x72
-#define _PS2_LEFT 0x6B
-#define _PS2_RIGHT 0x74
-#define _PS2_KPENT 0x5A
-#define _PS2_LCONTROL 0x14
 
-// ZX Spectrum Matrix map codes
-#define _1	 0x03
-#define _2	 0x0B
-#define _3	 0x13
-#define _4	 0x1B
-#define _5	 0x23
-#define _6	 0x24
-#define _7	 0x1C
-#define _8	 0x14
-#define _9	 0x0C
-#define _0	 0x04
-#define _Q	 0x02
-#define _W	 0x0A
-#define _E	 0x12
-#define _R	 0x1A
-#define _T	 0x22
-#define _Y	 0x25
-#define _U	 0x1D
-#define _I	 0x15
-#define _O	 0x0D
-#define _P	 0x05
-#define _A	 0x01
-#define _S	 0x09
-#define _D	 0x11
-#define _F	 0x19
-#define _G	 0x21
-#define _H	 0x26
-#define _J	 0x1E
-#define _K	 0x16
-#define _L	 0x0E
-#define _ENT	0x06
-#define _CAPS	 0x00
-#define _Z	 0x08
-#define _X	 0x10
-#define _C	 0x18
-#define _V	 0x20
-#define _B	 0x27
-#define _N	 0x1F
-#define _M	 0x17
-#define _SYMB	 0x0F
-#define _SP	 0x07
-#define _NONE 0x30 // No key  
 
-// ZX Map flag bits
-#define _CS 0x80
-#define _SS 0x40
+#define ZX81       81
+#define ZXSPECTRUM 82
+
+#define ZXMODEL ZX81
+//#define ZXMODEL ZXSPECTRUM
+
+#define _SH 0x80  // _SH_COL e _SH_LINE devem ser definidos no arquivo de configuração da matriz do teclado 
+#define _EX 0x40  // _EX_COL e _EX_LINE devem ser definidos no arquivo de configuração da matriz do teclado  
 
 
 /*
@@ -136,18 +100,21 @@
    \___\___/_||_/__/\__\__,_|_||_\__/__/
 
 */
-const uint8_t PS2Keymap[] PROGMEM = {  // Speccy
-  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _CS + _SS, _NONE,  _NONE,
-  _NONE,  _NONE,  _CAPS,  _NONE,  _SYMB,  _Q,     _1,     _NONE,  _NONE,  _NONE,  _Z,     _S,     _A,     _W,     _2,     _NONE,
-  _NONE,  _C,     _X,     _D,     _E,     _4,     _3,     _NONE,  _NONE,  _SP,    _V,     _F,     _T,     _R,     _5,     _NONE,
-  _NONE,  _N,     _B,     _H,     _G,     _Y,     _6,     _NONE,  _NONE,  _NONE,  _M,     _J,     _U,     _7,     _8,     _NONE,
-  _NONE,  _NONE,  _K,     _I,     _O,     _0,     _9,     _NONE,  _NONE,  _NONE,  _NONE,  _L,     _NONE,  _P,     _NONE,  _NONE,
-  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _CS + _2, _NONE,  _ENT,   _NONE,  _NONE,  _NONE,  _NONE,  _NONE,
-  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _NONE,  _CS + _0, _NONE,  _NONE,  _1,     _NONE,  _4,     _7,     _NONE,  _NONE,  _NONE,
-  _0,     _SS + _M, _2,     _5,     _6,     _8,     _CS + _SP, _NONE,  _NONE,  _SS + _K, _3,     _SS + _J, _SS + _B, _9,     _NONE,  _NONE
-};
 
 
+#ifndef ZXMODEL
+#define ZXMODEL ZXSPECTRUM
+#endif
+
+#if ZXMODEL == ZX81
+#include "ZX81keyboardMatrixMap.h"
+#include "ZX81scancodesToKeycodes.h"
+
+#elif ZXMODEL == ZXSPECTRUM
+#include "ZXspectrumKeyboadMatrixMap.h"
+#include "ZXspectrumScancodesToKeycodes.h"
+
+#endif
 
 
 /*
@@ -226,6 +193,32 @@ void Clear_Matrix()
    CS Caps Shift for composed keys (like directional keys)
    SS Symbol Shift for composed keys
 
+*/
+
+
+//
+// Atualiza matriz do teclado baseado num mapa de linha e coluna
+/*
+void Atualiza_Matriz( unsigned char m){
+unsigned char linha,coluna;
+
+    linha = m & 0x07;
+	coluna =  (m>>3) & 0x07;
+	
+	if (BRK==true) { 
+		BRK=false;
+		Keymap[linha] |= (1<<coluna);         // liga bit para desativar tecla 
+		if (m & _SH) Keymap[_SH_LINE] |=(1<<_SH_COL);  // se bit 7 estiver ligado desativa SHIFT na linha 5, coluna 0
+		if (m & _EX) Keymap[_EX_LINE] |=(1<<_EX_COL);  // se bit 6 estiver ligado desativa EXTENDED SHIFT na linha 7, coluna 1
+					
+	} else {                             
+		Keymap[linha] &= ~(1<<coluna);        // zera bit para ativar a tecla
+		if (m & _SH) Keymap[_SH_LINE] &= ~(1<<_SH_COL);   // se bit 7 estiver ligado ativa SHIFT na linha 5, coluna 0	
+		if (m & _EX) Keymap[_EX_LINE] &= ~(1<<_EX_COL);   // se bit 6 estiver ligado ativa EXTENDED SHIFT na linha 7, coluna 1
+	}
+	
+
+}
 */
 void Update_matrix( char m) {
   uint8_t line = m & 0x07;
@@ -394,6 +387,35 @@ void loop()
   pinMode(13,OUTPUT);
   digitalWrite(13,HIGH);
  
+   // Loop principal de leitura do teclado PS/2 e atualização da matriz 
+  for (;;) {
+	  code=kbd.read(); 
+	 
+	  if (code==0xE0) { 
+			EXT=true;
+		} else if (code==0xF0) {
+			BRK=true;
+		} else {
+			if (EXT==true) { // Caracteres expandidos <E0> + <Scancode>
+				EXT=false;
+				if (code<128) {					  
+					m=PS2Keymap_Ext_KEY_ABNT[code]; // Associa o Scancode extendido ao keymap
+				} else m=_KEY_NONE;
+			} else { // Caracteres normais <Scancode>
+				if (code==0x83) code=0x7f; // substitui scancode da tecla F7 para encurtar tabela
+				if (code<128) {
+					m=PS2Keymap_KEY_ABNT[code]; // Associa o Scancode ao keymap
+				} else m=_KEY_NONE;
+			}		
+			// TODO: checar se mapa da tecla é válido.	
+//			Atualiza_Matriz(m); // usa o código recebido (e o estado de BRK) para atualizar a matriz 
+            Update_matrix(m); // usa o keymap (e o estado de BRK) para atualizar a matriz			
+		}
+  } // loop principal 
+ 
+ 
+  
+/* 
   for (;;) { // ever
     //  Get a keycode from the keyboard and convert and update Keyboard Map  
     code = kbd.read();
@@ -426,5 +448,5 @@ void loop()
       Update_matrix(m); // usa o keymap (e o estado de BRK) para atualizar a matriz
     }
   }
- 
+*/ 
 }
