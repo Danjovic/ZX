@@ -28,26 +28,26 @@
  
 */
 
-/*  ZX 81 keyboard matrix  
+/*  Jupiter Ace Keyboard matrix  
    
      D4   D3   D2   D1   D0
- A8  V    C    X    Z    SHFT
+ A8  C    X    Z    SYMB SHFT
  A9  G    F    D    S    A
 A10  T    R    E    W    Q
 A11  5    4    3    2    1
 A12  6    7    8    9    0
 A13  Y    U    I    O    P
 A14  H    J    K    L    ENT  
-A15  B    N    M    .    SPACE
+A15  V    B    N    M    SPACE
 
 */
 
 //       KEY       COL     LINE 
-#define _KEY_SH   (0<<3) + 0 // Shift
-#define _KEY_Z	  (1<<3) + 0 	
-#define _KEY_X	  (2<<3) + 0 	
-#define _KEY_C	  (3<<3) + 0 	
-#define _KEY_V	  (4<<3) + 0 	
+#define _KEY_SH    (0<<3) + 0  // Shift
+#define _KEY_SYMB  (1<<3) + 0  // Symbol Shift
+#define _KEY_Z	   (2<<3) + 0 
+#define _KEY_X	   (3<<3) + 0 
+#define _KEY_C	   (4<<3) + 0 
 
 #define _KEY_A	  (0<<3) + 1 
 #define _KEY_S	  (1<<3) + 1 
@@ -86,12 +86,13 @@ A15  B    N    M    .    SPACE
 #define _KEY_H	  (4<<3) + 6 
 
 #define _KEY_SP	  (0<<3) + 7 
-#define _KEY_DOT  (1<<3) + 7 
-#define _KEY_M	  (2<<3) + 7 
-#define _KEY_N	  (3<<3) + 7 
-#define _KEY_B	  (4<<3) + 7 
+#define _KEY_M    (1<<3) + 7 
+#define _KEY_N	  (2<<3) + 7 
+#define _KEY_B	  (3<<3) + 7 
+#define _KEY_V	  (4<<3) + 7 
 
 #define _KEY_NONE (7<<3) + 7   
+
 
 // Flag da tecla de SHIFT
 #define _SHIFT 0x80
@@ -100,4 +101,6 @@ A15  B    N    M    .    SPACE
 #define _SH_LINE 0
 
 #define _EX_COL  1 
-#define _EX_LINE 7
+#define _EX_LINE 0
+
+
