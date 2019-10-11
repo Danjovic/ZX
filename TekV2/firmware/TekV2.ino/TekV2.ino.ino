@@ -198,8 +198,9 @@ void Clear_Matrix()
 
 //
 // Atualiza matriz do teclado baseado num mapa de linha e coluna
-/*
-void Atualiza_Matriz( unsigned char m){
+
+//void Atualiza_Matriz( unsigned char m){
+void Update_matrix( char m){  
 unsigned char linha,coluna;
 
     linha = m & 0x07;
@@ -216,10 +217,18 @@ unsigned char linha,coluna;
 		if (m & _SH) Keymap[_SH_LINE] &= ~(1<<_SH_COL);   // se bit 7 estiver ligado ativa SHIFT na linha 5, coluna 0	
 		if (m & _EX) Keymap[_EX_LINE] &= ~(1<<_EX_COL);   // se bit 6 estiver ligado ativa EXTENDED SHIFT na linha 7, coluna 1
 	}
-	
+#ifdef DEBUG
+  // debug
+  Serial.println ("\n76543210");
+  for (uint8_t line = 0; line < 8; line++) {
+    Serial.print((uint8_t)Keymap[line], BIN);
+    Serial.print(" ");
+    Serial.println(line);
+  }
+#endif	
 
 }
-*/
+/*
 void Update_matrix( char m) {
   uint8_t line = m & 0x07;
   uint8_t row =  (m >> 3) & 0x07;
@@ -244,7 +253,7 @@ void Update_matrix( char m) {
   }
 #endif
 }
-
+*/
 /*
    Check the state of each line A8..A15 then add its active buttons
    The ZX bios always activates one line at a time but some games can
@@ -399,12 +408,14 @@ void loop()
 			if (EXT==true) { // Caracteres expandidos <E0> + <Scancode>
 				EXT=false;
 				if (code<128) {					  
-					m=PS2Keymap_Ext_KEY_ABNT[code]; // Associa o Scancode extendido ao keymap
+//					m=PS2Keymap_Ext_KEY_ABNT[code]; // Associa o Scancode extendido ao keymap
+          m = pgm_read_byte(PS2Keymap_Ext_KEY_ABNT + code); // Associa o Scancode ao keymaps         
 				} else m=_KEY_NONE;
 			} else { // Caracteres normais <Scancode>
 				if (code==0x83) code=0x7f; // substitui scancode da tecla F7 para encurtar tabela
 				if (code<128) {
-					m=PS2Keymap_KEY_ABNT[code]; // Associa o Scancode ao keymap
+//					m=PS2Keymap_KEY_ABNT[code]; // Associa o Scancode ao keymap
+          m = pgm_read_byte(PS2Keymap_KEY_ABNT + code); // Associa o Scancode ao keymaps         
 				} else m=_KEY_NONE;
 			}		
 			// TODO: checar se mapa da tecla é válido.	
