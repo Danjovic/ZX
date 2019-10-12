@@ -1,4 +1,4 @@
-/*
+/****************************************************************************
    _____    _         _  __          _                         _
   |_   _|__| | __    | |/ /___ _   _| |__   ___   __ _ _ __ __| |
     | |/ _ \ |/ /____| ' // _ \ | | | '_ \ / _ \ / _` | '__/ _` |
@@ -31,13 +31,14 @@ Versioning:
  Alfa release (functional)
 -October 7, 2019 
  Added option to generate code to ZX81 and Speccy 
-
+-October 12,2019 
+ beta release
 
 
 
 */
 
-/*
+/****************************************************************************
    ___ _               _
   | _ (_)_ _  ___ _  _| |_
   |  _/ | ' \/ _ \ || |  _|
@@ -65,7 +66,7 @@ Versioning:
 
 #include <ps2.h> //  PS2 library by Chris J. Kiick
 
-/*
+/****************************************************************************
    ___       __ _      _ _   _
   |   \ ___ / _(_)_ _ (_) |_(_)___ _ _  ___
   | |) / -_)  _| | ' \| |  _| / _ \ ' \(_-<
@@ -73,14 +74,13 @@ Versioning:
 
 */
 
-
-#define DEBUG
+// Uncomment the line below to enable debug.
+//#define DEBUG
 
 #define Pin_PS2_DAT 11  //  same as MOSI
 #define Pin_PS2_CLK 12  //  same as MISO
 
 #define Keymap_Size 8  // 8 characters for ZX Spectrum
-
 
 
 #define ZX81       81
@@ -89,11 +89,10 @@ Versioning:
 #define ZXMODEL ZX81
 //#define ZXMODEL ZXSPECTRUM
 
-#define _SH 0x80  // _SH_COL e _SH_LINE devem ser definidos no arquivo de configuração da matriz do teclado 
-#define _EX 0x40  // _EX_COL e _EX_LINE devem ser definidos no arquivo de configuração da matriz do teclado  
+#define _SH (1<<7)  // Shift flag position
+#define _EX (1<<6)  // Extended shift flag  
 
-
-/*
+/****************************************************************************
     ___             _            _
    / __|___ _ _  __| |_ __ _ _ _| |_ ___
   | (__/ _ \ ' \(_-<  _/ _` | ' \  _(_-<
@@ -117,7 +116,7 @@ Versioning:
 #endif
 
 
-/*
+/****************************************************************************
   __   __        _      _    _
   \ \ / /_ _ _ _(_)__ _| |__| |___ ___
    \ V / _` | '_| / _` | '_ \ / -_|_-<
@@ -131,7 +130,7 @@ volatile char Keymap[Keymap_Size] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0
 bool EXT = false;
 bool BRK = false;
 
-/*
+/****************************************************************************
    ___             _   _
   | __|  _ _ _  __| |_(_)___ _ _  ___
   | _| || | ' \/ _|  _| / _ \ ' \(_-<
@@ -165,9 +164,6 @@ bool kbd_init()
 }
 
 
-
-
-
 //
 // Clear the Keyboard Matrix
 //
@@ -179,43 +175,45 @@ void Clear_Matrix()
 }
 
 
-//
-// Update the Keyboard Matrix based on a map code for a row and a line
-//
+
 /*
-   ZX spectrum keyboard matrix map codes
+   keyboard matrix map codes
    bit  7   6   5   4   3   2   1   0
-        CS  SS  r2  r1  r0  l2  l1  l0
+        SH  EX  r2  r1  r0  l2  l1  l0
 
    r0..r2 is row [0..4]   mapping bits D0 to D4
    l0..l2 is line [0..7]  mapping address lines A8 to A15
 
-   CS Caps Shift for composed keys (like directional keys)
-   SS Symbol Shift for composed keys
+   SH Normal Shift
+   EX Extended Shift (Symbol Shift on Speccy)
 
 */
 
 
 //
-// Atualiza matriz do teclado baseado num mapa de linha e coluna
-
-//void Atualiza_Matriz( unsigned char m){
+// Update the Keyboard Matrix based on a map code for a row and a line
+//
 void Update_matrix( char m){  
 unsigned char linha,coluna;
+#ifdef DEBUG
+Serial.print("code:"); 
+Serial.print(m,HEX); 
+if (BRK) Serial.print(" BRK ");
+#endif
 
-    linha = m & 0x07;
+  linha = m & 0x07;
 	coluna =  (m>>3) & 0x07;
 	
-	if (BRK==true) { 
+	if (BRK==true) { // deactivake key on matrix after receive a BREAK code
 		BRK=false;
-		Keymap[linha] |= (1<<coluna);         // liga bit para desativar tecla 
-		if (m & _SH) Keymap[_SH_LINE] |=(1<<_SH_COL);  // se bit 7 estiver ligado desativa SHIFT na linha 5, coluna 0
-		if (m & _EX) Keymap[_EX_LINE] |=(1<<_EX_COL);  // se bit 6 estiver ligado desativa EXTENDED SHIFT na linha 7, coluna 1
+		Keymap[linha] |= (1<<coluna);         // set bit to deactivate key 
+		if (m & _SH) Keymap[_SH_LINE] |=(1<<_SH_COL);  // deactivate normal SHIFT 
+		if (m & _EX) Keymap[_EX_LINE] |=(1<<_EX_COL);  // deactivate EXTENDED SHIFT
 					
-	} else {                             
-		Keymap[linha] &= ~(1<<coluna);        // zera bit para ativar a tecla
-		if (m & _SH) Keymap[_SH_LINE] &= ~(1<<_SH_COL);   // se bit 7 estiver ligado ativa SHIFT na linha 5, coluna 0	
-		if (m & _EX) Keymap[_EX_LINE] &= ~(1<<_EX_COL);   // se bit 6 estiver ligado ativa EXTENDED SHIFT na linha 7, coluna 1
+	} else { // activate key on matrix after receive a valid code                            
+		Keymap[linha] &= ~(1<<coluna);        // clear bit to activate key
+		if (m & _SH) Keymap[_SH_LINE] &= ~(1<<_SH_COL);   // activate normal SHIFT 
+		if (m & _EX) Keymap[_EX_LINE] &= ~(1<<_EX_COL);   // activate EXTENDED SHIFT
 	}
 #ifdef DEBUG
   // debug
@@ -228,32 +226,7 @@ unsigned char linha,coluna;
 #endif	
 
 }
-/*
-void Update_matrix( char m) {
-  uint8_t line = m & 0x07;
-  uint8_t row =  (m >> 3) & 0x07;
 
-  if (BRK == true) {
-    BRK = false;
-    Keymap[line] |= (1 << row);      //  set bits to break
-    if (m & 0x80) Keymap[0] |= (1 << 0); // if bit 7 is set then set Caps Shift bit at row=0, line=0
-    if (m & 0x40) Keymap[7] |= (1 << 1); // if bit 6 is set then set Symbol Shift bit at row=1, line=7
-  } else {
-    Keymap[line] &= ~(1 << row);      // reset bits to make
-    if (m & 0x80) Keymap[0] &= ~(1 << 0); // if bit 7 is set then reset Caps Shift bit at row=0, line=0
-    if (m & 0x40) Keymap[7] &= ~(1 << 1); // if bit 6 is set then reset Symbol Shift bit at row=1, line=7
-  }
-#ifdef DEBUG
-  // debug
-  Serial.println ("\n76543210");
-  for (line = 0; line < 8; line++) {
-    Serial.print((uint8_t)Keymap[line], BIN);
-    Serial.print(" ");
-    Serial.println(line);
-  }
-#endif
-}
-*/
 /*
    Check the state of each line A8..A15 then add its active buttons
    The ZX bios always activates one line at a time but some games can
@@ -263,8 +236,8 @@ void Update_matrix( char m) {
 ISR (INT0_vect, ISR_NAKED) {
 
   asm volatile (
-
-    "in __tmp_reg__,__SREG__ \n\t"   // Salva registrador de Status
+    "push __tmp_reg__\n\t"
+    "in __tmp_reg__,__SREG__ \n\t"   // Save Status register
 
     "push r17\n\t"                   // keep PINB state
     "push r18\n\t"                   // keep PIND state
@@ -316,14 +289,14 @@ ISR (INT0_vect, ISR_NAKED) {
 
     "out %2,r19 \n\t"                // Write bits D0-D4 to the outputs
 
-    "sbi %3,5 \n\t"                  // release !Wait line
-    "cbi %2,5 \n\t"                  // release !Wait line
+    "sbi %3,5 \n\t"                   // pulse !Wait line high briefly
+    "cbi %2,5 \n\t"                   // to release Z80 from Wait State
     "nop \n\t"
     "nop \n\t"
-    "sbi %2,5 \n\t"                  // pulse !Wait line high briefly
-    "cbi %3,5 \n\t"                  // to release Z80 from Wait State
+    "sbi %2,5 \n\t"                  
+    "cbi %3,5 \n\t"                  
  
-    "pop r27\n\t"
+    "pop r27\n\t"                    // restore registers used on this routine
     "pop r26\n\t"
     "pop r20\n\t"
     "pop r19\n\t"
@@ -331,6 +304,7 @@ ISR (INT0_vect, ISR_NAKED) {
     "pop r17\n\t"
 
     "out __SREG__,__tmp_reg__ \n\t"  // restore Status register
+    "pop __tmp_reg__\n\t"
     "reti \n\t"
     :: "I" (_SFR_IO_ADDR(PINB)), "I" (_SFR_IO_ADDR(PIND)) , "I" (_SFR_IO_ADDR(PORTC)), "I" (_SFR_IO_ADDR(DDRC)) );
 
@@ -338,8 +312,8 @@ ISR (INT0_vect, ISR_NAKED) {
 }
 
 
-// ***************************************************************************
-/*
+
+/****************************************************************************
      _          _      _             ___     _
     /_\  _ _ __| |_  _(_)_ _  ___   / __|___| |_ _  _ _ __
    / _ \| '_/ _` | || | | ' \/ _ \  \__ Y -_)  _| || | '_ \
@@ -380,7 +354,7 @@ void setup()
 }
 
 
-/*
+/****************************************************************************
    __  __      _        _
   |  \/  |__ _(_)_ _   | |   ___ ___ _ __
   | |\/| / _` | | ' \  | |__/ _ Y _ \ '_ \
@@ -389,8 +363,8 @@ void setup()
 */
 void loop()
 {
-  unsigned char code;
-  unsigned char m;
+  uint8_t code;
+  uint8_t m;
 
   // pin 13 shall be at HIGH to enable Wait States to Z80
   pinMode(13,OUTPUT);
@@ -399,7 +373,11 @@ void loop()
    // Loop principal de leitura do teclado PS/2 e atualização da matriz 
   for (;;) {
 	  code=kbd.read(); 
-	 
+#ifdef DEBUG
+Serial.print("Read:"); 
+Serial.print(code,HEX); 
+Serial.print(" ;");
+#endif	 
 	  if (code==0xE0) { 
 			EXT=true;
 		} else if (code==0xF0) {
@@ -424,40 +402,4 @@ void loop()
 		}
   } // loop principal 
  
- 
-  
-/* 
-  for (;;) { // ever
-    //  Get a keycode from the keyboard and convert and update Keyboard Map  
-    code = kbd.read();
-
-
-    if (code == 0xE0) {
-      EXT = true;
-    } else if (code == 0xF0) {
-      BRK = true;
-    } else {
-      if (EXT == true) { // extended set
-        EXT = false;
-        switch (code) {
-          case _PS2_UP:   	m = 0x80 | _7; break; // Caps Shift bit + map code for ZX key 7
-          case _PS2_DOWN: 	m = 0x80 | _6; break;
-          case _PS2_LEFT: 	m = 0x80 | _5; break;
-          case _PS2_RIGHT:	m = 0x80 | _8; break;
-          case _PS2_KPENT:	m = _ENT     ; break; // Enter key
-          case _PS2_LCONTROL:	m = _SYMB    ; break; // Enter key
-          default:                m = _NONE;
-        }
-
-      } else { // normal set
-        if (code < 128) {
-          m = pgm_read_byte(PS2Keymap + code); // Associa o Scancode ao keymaps
-        } else m = _NONE;
-      }
-
-      // todo: test if valid code
-      Update_matrix(m); // usa o keymap (e o estado de BRK) para atualizar a matriz
-    }
-  }
-*/ 
 }
