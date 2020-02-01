@@ -1,10 +1,18 @@
- 
-all: main
+# Makefile by Diego Herranz - https://github.com/diegoherranz/sdcc-examples
+SRC=main.c
 
- 
-main: main.c
-	sdcc  --use-non-free -mpic14 -p16f688 -DZXMODEL=ZX81 main.c -o "zx81"
-	sdcc  --use-non-free -mpic14 -p16f688 -DZXMODEL=ZXSPECTRUM main.c -o "speccy"
+CC=sdcc
+FAMILY=pic14
+PROC=16f688
+#ZXMODEL=ZXSPECTRUM
+ZXMODEL=ZX81
 
-program:
-	pk2cmd -B/usr/share/pk2/ -PPIC16F688 -Fmain.hex -M -R
+all: $(SRC:.c=.hex)
+
+$(SRC:.c=.hex): $(SRC)
+	$(CC) --use-non-free -m$(FAMILY) -p$(PROC) -D$(ZXMODEL) $^
+
+clean:
+	rm -f $(SRC:.c=.asm) $(SRC:.c=.cod) $(SRC:.c=.hex) $(SRC:.c=.lst) $(SRC:.c=.o)
+
+.PHONY: all clean
