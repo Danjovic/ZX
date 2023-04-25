@@ -140,7 +140,7 @@ _SS + _KEY_J,      // 0x7B  KPMINUS  (SS + J)
 _SS + _KEY_B,      // 0x7C  KPTIMES  (SS + B)
 _KEY_9,            // 0x7D  KP9
 _KEY_NONE,         // 0x7E  SCROLL
-_KEY_NONE,         // 0x7F  F7 - O scancode original da tecla F7 e o 0x83 mas foi
+_KEY_NONE         // 0x7F  F7 - O scancode original da tecla F7 e o 0x83 mas foi
 };             //            movido para 0x7f para que a tabela caiba em 128 bytes
 
 
